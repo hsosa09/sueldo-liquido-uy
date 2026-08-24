@@ -38,6 +38,11 @@ android {
 }
 
 kotlin {
+    // Fija el JDK de compilación en vez de heredar el del entorno. Ver la nota
+    // en gradle.properties: es lo que permite compilar indistintamente desde
+    // Android Studio (flatpak) y desde la terminal.
+    jvmToolchain(17)
+
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
