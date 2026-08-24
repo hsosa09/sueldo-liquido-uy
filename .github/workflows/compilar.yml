@@ -1,0 +1,75 @@
+name: Compilar APK
+
+# Se dispara solo con cada push a main, a mano desde la pestaña Actions,
+# y al publicar una etiqueta v1.0, v1.1, etc.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  compilar:
+    name: Tests y APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Traer el código
+        uses: actions/checkout@v4
+
+      # JDK 21: es lo que pide gradle/gradle-daemon-jvm.properties.
+      # Con una versión menor, Gradle ni arranca.
+      - name: Preparar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Tests unitarios
+        run: ./gradlew testDebugUnitTest --console=plain
+
+      - name: Compilar el APK
+        run: ./gradlew assembleDebug --console=plain
+
+      # Si algún test falla, el informe queda disponible para leer el motivo.
+      - name: Guardar el informe de tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informe-de-tests
+          path: app/build/reports/tests/
+          retention-days: 14
+
+      - name: Publicar el APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: sueldo-liquido-uy-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 90
+
+      # Al empujar una etiqueta v*, además se crea una Release con el APK
+      # colgado. A diferencia de los artefactos, una Release es pública,
+      # no vence, y se descarga sin tener cuenta de GitHub.
+      - name: Publicar la Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk \
+             "sueldo-liquido-uy-${GITHUB_REF_NAME}.apk"
+          gh release create "$GITHUB_REF_NAME" \
+            "sueldo-liquido-uy-${GITHUB_REF_NAME}.apk" \
+            --title "Sueldo Líquido UY $GITHUB_REF_NAME" \
+            --notes "APK de depuración, compilado automáticamente desde el código de esta etiqueta.
+
+          Es la versión **sin publicidad**: no incluye ningún SDK de anuncios y no declara un solo permiso.
+
+          Para instalarlo hay que permitir la instalación desde orígenes desconocidos. No está firmado con la clave de producción, así que no se actualiza sobre la versión de Google Play ni al revés."
+
+permissions:
+  contents: write

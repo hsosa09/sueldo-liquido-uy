@@ -1,0 +1,20 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Clave de firma de la app. NUNCA al repositorio: si se sube, queda en el
+# historial para siempre y cualquiera puede firmar actualizaciones falsas.
+*.jks
+*.keystore
