@@ -1,3 +1,9 @@
 <resources>
-    <string name="app_name">SueldoLiquidoUY</string>
+    <!--
+        Nombre bajo el ícono del lanzador. Corto a propósito: la mayoría de los
+        lanzadores corta alrededor de los 12 caracteres, así que "Sueldo Líquido
+        UY" quedaría como "Sueldo Líq…". El nombre completo va en la ficha de
+        Play y en la pantalla de configuración.
+    -->
+    <string name="app_name">Sueldo Líquido</string>
 </resources>

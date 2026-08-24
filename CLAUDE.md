@@ -26,16 +26,42 @@ Emuladores de referencia para probar: uno con **API 26** y uno con **API 36**. E
 
 ## 2. Estado actual
 
-Existe la versión 1.0 funcionando (una pantalla, cálculo correcto, tests pasando). Está a medio migrar a la 1.1 (varias pantallas) y **no compila**. Causas conocidas:
+**La 1.0 está terminada y verificada.** Compila, los 14 tests unitarios pasan, y
+los cuatro casos de la sección 4 dan exacto tanto en los tests como en pantalla.
+Los pasos 1 a 7 de la sección 9 están hechos.
 
-1. **Falta la dependencia de íconos.** Material 3 dejó de arrastrar `material-icons-core` de forma transitiva. Todos los `import androidx.compose.material.icons.*` fallan. Agregar `implementation("androidx.compose.material:material-icons-extended")` (sin versión: la maneja el BOM de Compose).
-2. **Falta `buildConfig = true`** en `android { buildFeatures { } }`. `BuildConfig.VERSION_NAME` no resuelve.
-3. **Faltan las funciones auxiliares compartidas.** En la 1.0 vivían `private` dentro de `MainActivity.kt`. Al partir la app en pantallas hay que sacarlas a `Componentes.kt` sin el modificador `private`: `CampoNumerico`, `FilaSwitch`, `Fila`, `moneda`, `porcentaje`, `String.aNumero()`, `String.aEntero()`.
-4. **Falta el paquete `anuncios`** con `GestorAnuncios.kt` y `BannerPublicitario.kt`.
+Cómo está partido el trabajo en ramas:
 
-Hay además un `No parameter with name 'conyugeACargo' found` en la construcción de `Entrada(...)` que probablemente sea cascada de (3); si sobrevive, verificar que el nombre del campo en `dominio/Modelos.kt` coincida exactamente.
+| Rama | Qué es |
+|---|---|
+| `main` | La 1.0: sin publicidad, sin permisos, sin conexión. Es lo que se sube primero a Play. |
+| `play` | La 1.1: la misma app más AdMob. Cambia cuatro archivos y nada más: `GestorAnuncios.kt`, `BannerPublicitario.kt`, el manifiesto y `app/build.gradle.kts`. |
 
-**Primera tarea: dejar el proyecto compilando.** Recién después, avanzar con lo que falta.
+En `main`, el paquete `anuncios` existe igual, con todas las operaciones vacías
+y `GestorAnuncios.DISPONIBLE = false`. Es una costura, no código muerto: hace
+que las pantallas, la navegación y los ajustes sean idénticos en las dos ramas,
+así un cambio en la calculadora no hay que hacerlo dos veces.
+
+Material de tienda, en `tienda/`:
+
+- `ficha-play.md` — todos los textos de Play Console, con los límites de
+  caracteres, las respuestas del formulario de Seguridad de los datos y qué hay
+  que cambiar al subir la 1.1.
+- `icono-play-512.png` y `generar-icono.py` — el ícono de la tienda se genera
+  del mismo dibujo que el del lanzador, y el script falla si los dos se
+  separaron.
+- `capturas/` — cinco capturas de teléfono, 1080 × 1920.
+
+`pruebas-manuales.md` tiene la lista de lo que los tests no pueden cubrir:
+persistencia, navegación, rotación, parámetros y publicidad.
+
+**Lo que falta para publicar** no es código:
+
+1. El gráfico de funciones de 1024 × 500 que pide Play.
+2. Crear la ficha en Play Console con los textos de `tienda/ficha-play.md`.
+3. La prueba cerrada con 12 testers durante 14 días corridos, que Google exige
+   antes de producción en las cuentas personales. Conviene arrancarla cuanto
+   antes: son dos semanas de reloj.
 
 ---
 
@@ -316,13 +342,25 @@ Un anuncio recompensado necesita una recompensa real, anunciada de antemano, con
 
 ## 9. Qué hacer, en orden
 
-1. **Dejar el proyecto compilando** (sección 2). Sin tocar nada más.
-2. Verificar que los 7 tests unitarios originales pasen y que los 4 casos de la sección 4 den exacto.
-3. Completar la migración a 1.1: `Componentes.kt`, navegación entre pantallas, persistencia con DataStore, pantalla de configuración, botón a GitHub.
-4. Paquete `anuncios` con banner y apertura, con los identificadores de prueba y los tres frenos.
-5. Pantalla de valores y tasas, con validación, aviso en resultados y migración por ejercicio.
-6. Batería de tests: unitarios para el dominio y la validación; lista de casos manuales para persistencia, navegación, publicidad y parámetros.
-7. Pulido: ícono, textos de la ficha, capturas.
+Los siete pasos del plan original están hechos. Se dejan anotados porque
+sirven para entender por qué el proyecto está armado como está.
+
+1. ~~Dejar el proyecto compilando.~~
+2. ~~Verificar los tests unitarios y los 4 casos de la sección 4.~~ Son 14 tests.
+3. ~~Migración a varias pantallas: `Componentes.kt`, navegación, DataStore, configuración, botón a GitHub.~~
+4. ~~Paquete `anuncios` con banner y apertura, identificadores de prueba y los tres frenos.~~ Vive en la rama `play`; en `main` quedó la versión vacía.
+5. ~~Pantalla de valores y tasas, con validación, aviso en resultados y migración por ejercicio.~~
+6. ~~Batería de tests.~~ Los unitarios en `CalculadoraTest.kt`; los manuales en `pruebas-manuales.md`.
+7. ~~Pulido: ícono, textos de la ficha, capturas.~~ Todo en `tienda/`.
+
+Lo que sigue, en orden:
+
+8. El gráfico de funciones de 1024 × 500.
+9. Subir la 1.0 a Play Console y arrancar la prueba cerrada de 14 días.
+10. Recién con la 1.0 aprobada, publicar la 1.1 desde la rama `play`. Antes de
+    subirla hay que actualizar tres cosas de la ficha —anuncios, identificador de
+    publicidad y política de privacidad—; están detalladas al final de
+    `tienda/ficha-play.md`.
 
 ---
 
@@ -338,6 +376,12 @@ Un anuncio recompensado necesita una recompensa real, anunciada de antemano, con
 
 ---
 
-## 11. Documento complementario
+## 11. Documentos complementarios
 
-Existe una guía larga (`guia-app-sueldo-liquido-uruguay.md`) con el instructivo completo paso a paso: instalación en Ubuntu, código de referencia de cada archivo, explicación de las políticas de AdMob citadas acá, proceso de publicación en Play Console y mantenimiento anual. Consultarla cuando haga falta el detalle o la justificación de alguna decisión.
+| Archivo | Para qué |
+|---|---|
+| `puesta-en-marcha.md` | Dejar el proyecto compilando en una máquina nueva, y qué cosas no viajan en el repositorio. |
+| `pruebas-manuales.md` | Lo que los tests unitarios no cubren: persistencia, navegación, rotación, parámetros y publicidad. |
+| `tienda/ficha-play.md` | Los textos de Play Console y las respuestas del formulario de Seguridad de los datos. |
+
+Existe además una guía larga (`guia-app-sueldo-liquido-uruguay.md`) con el instructivo completo paso a paso: instalación en Ubuntu, código de referencia de cada archivo, explicación de las políticas de AdMob citadas acá, proceso de publicación en Play Console y mantenimiento anual. Consultarla cuando haga falta el detalle o la justificación de alguna decisión.
